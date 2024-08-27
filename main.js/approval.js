@@ -18,9 +18,54 @@ function countBorrowedTimes(studentId) {
     return requests.filter(request => request.studentId === studentId).length;
 }
 
+function calculateEquipmentStatistics() {
+    const requests = JSON.parse(localStorage.getItem('requests')) || [];
+    
+    // นับจำนวนอุปกรณ์ตามประเภทเฉพาะที่ได้รับการอนุมัติ
+    const equipmentCounts = requests.reduce((acc, request) => {
+        if (request.status === 'อนุมัติ' && request.equipment) {
+            acc[request.equipment] = (acc[request.equipment] || 0) + 1;
+        }
+        return acc;
+    }, {});
+
+    // นับจำนวนรวมของการอนุมัติทั้งหมด
+    const totalApprovedCount = Object.values(equipmentCounts).reduce((sum, count) => sum + count, 0);
+    
+    return {
+        equipmentCounts,
+        totalApprovedCount
+    };
+}
+
+
+function displayEquipmentStatistics() {
+    const statsContainer = document.getElementById('equipmentStatistics');
+    const totalBorrowingsElement = document.getElementById('totalBorrowings');
+    
+    const { equipmentCounts, totalApprovedCount } = calculateEquipmentStatistics();
+    
+    // อัปเดตจำนวนการยืมทั้งหมด
+    totalBorrowingsElement.innerText = `ทั้งหมด: ${totalApprovedCount} ครั้ง`;
+    
+    // ลบข้อมูลเก่าที่แสดง
+    statsContainer.innerHTML = '';
+
+    // แสดงจำนวนการยืมแยกตามอุปกรณ์ที่ได้รับการอนุมัติ
+    for (const [equipment, count] of Object.entries(equipmentCounts)) {
+        const equipmentStat = document.createElement('p');
+        equipmentStat.innerText = `${equipment}: ${count} ครั้ง`;
+        statsContainer.appendChild(equipmentStat);
+    }
+}
+
+
+
 function loadRequests(page) {
+    console.log("Loading requests for page:", page); // ตรวจสอบการเรียกใช้ฟังก์ชัน
     const requestsTable = document.getElementById('requestsTable');
     const requests = JSON.parse(localStorage.getItem('requests')) || [];
+    console.log("Requests data:", requests); // ตรวจสอบข้อมูลใน Local Storage
 
     // Clear previous rows except the header  ลบแถวก่อนหน้า ยกเว้นส่วนหัว
     requestsTable.querySelectorAll('tr:not(:first-child)').forEach(row => row.remove());
@@ -30,6 +75,8 @@ function loadRequests(page) {
     const end = start + maxRequestsPerPage;
     const paginatedRequests = requests.slice(start, end);
 
+    console.log("Paginated Requests:", paginatedRequests); // ตรวจสอบข้อมูลที่ถูกแบ่งหน้า
+
     paginatedRequests.forEach(request => {
         const row = requestsTable.insertRow();
         row.className = request.status === 'อนุมัติ' ? 'table-custom-approved' :
@@ -38,7 +85,7 @@ function loadRequests(page) {
     
         const formattedDateTime = formatDate(request.dateTime);
     
-       row.insertCell(0).innerText = formattedDateTime;
+        row.insertCell(0).innerText = formattedDateTime;
         row.insertCell(1).innerText = request.studentId;
         row.insertCell(2).innerText = request.studentName;
         row.insertCell(3).innerText = request.equipment;
@@ -51,21 +98,24 @@ function loadRequests(page) {
         row.insertCell(7).innerText = request.staffName || '-'; // Add staff name to the table
 
         const actionCell = row.insertCell(8);
-        // Add number of times borrowed  จำนวนการยืม
-        // const borrowedTimesCell = row.insertCell(9);
-        // borrowedTimesCell.innerText = countBorrowedTimes(request.studentId);
     
         // Add buttons based on status เพิ่มปุ่มตามสถานะ
         if (request.status === 'รออนุมัติ') {
             const approveButton = document.createElement('button');
             approveButton.innerText = 'อนุมัติ';
             approveButton.className = 'btn btn-success btn-sm mr-2';
-            approveButton.onclick = () => updateRequestStatus(request.id, 'อนุมัติ');
+            approveButton.onclick = () => {
+                console.log("Approving request ID:", request.id); // ตรวจสอบการอนุมัติ
+                updateRequestStatus(request.id, 'อนุมัติ');
+            };
     
             const denyButton = document.createElement('button');
             denyButton.innerText = 'ปฏิเสธ';
             denyButton.className = 'btn btn-danger btn-sm';
-            denyButton.onclick = () => updateRequestStatus(request.id, 'ปฏิเสธ');
+            denyButton.onclick = () => {
+                console.log("Denying request ID:", request.id); // ตรวจสอบการปฏิเสธ
+                updateRequestStatus(request.id, 'ปฏิเสธ');
+            };
             
             actionCell.appendChild(approveButton);
             actionCell.appendChild(denyButton);
@@ -74,7 +124,11 @@ function loadRequests(page) {
     
     // Update pagination buttons
     updatePaginationInfo(page, totalPages);
+
+    // แสดงสถิติการยืมอุปกรณ์
+    displayEquipmentStatistics();
 }
+
 
 function updatePaginationInfo(page, totalPages) {
     const paginationContainer = document.querySelector('.pagination');
@@ -173,10 +227,6 @@ function updatePaginationInfo(page, totalPages) {
     paginationContainer.appendChild(lastButton);
 }
 
-
-
-
-// ฟังก์ชันสำหรับอัปเดตสถานะ
 // ฟังก์ชันสำหรับอัปเดตสถานะ
 function updateRequestStatus(id, status) {
     let requests = JSON.parse(localStorage.getItem('requests')) || [];
@@ -193,7 +243,6 @@ function updateRequestStatus(id, status) {
     localStorage.setItem('requests', JSON.stringify(requests));
 
     if (status === 'อนุมัติ') {
-        // แสดงการโหลดขณะส่งคำขอ
         Swal.fire({
             title: 'กำลังส่งคำขอ...',
             text: 'กรุณารอสักครู่',
@@ -203,7 +252,6 @@ function updateRequestStatus(id, status) {
             }
         });
 
-        // ส่งข้อมูลไปยัง Google Sheets
         fetch('https://script.google.com/macros/s/AKfycbxvtdP0WK9IHDy06cMDoHrBWW1-yliO8pVXVK66TKhTWubSQwBPkOjKuHUONTpQQIjb/exec', {
             method: 'POST',
             body: new URLSearchParams({ 
@@ -217,16 +265,16 @@ function updateRequestStatus(id, status) {
         })
         .then(response => response.text())
         .then(data => {
-            console.log(data); // For debugging purposes
             Swal.fire({
                 icon: 'success',
                 title: 'สำเร็จ!',
                 text: 'คำขอถูกอนุมัติแล้ว',
                 confirmButtonText: 'ตกลง'
             });
+
+            displayEquipmentStatistics(); // อัปเดตสถิติอุปกรณ์หลังจากอนุมัติคำขอ
         })
         .catch(error => {
-            console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'เกิดข้อผิดพลาด',
@@ -235,7 +283,6 @@ function updateRequestStatus(id, status) {
             });
         });
     } else {
-        // แสดงแจ้งเตือนเมื่อปฏิเสธคำขอ
         Swal.fire({
             icon: 'warning',
             title: 'คำขอถูกปฏิเสธ',
@@ -244,9 +291,9 @@ function updateRequestStatus(id, status) {
         });
     }
 
-    // โหลดข้อมูลใหม่เพื่ออัปเดตหน้าจอ
     loadRequests(currentPage);
 }
+
 
 
 

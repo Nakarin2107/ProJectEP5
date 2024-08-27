@@ -79,11 +79,11 @@
             border-radius: 4px;
             transition: background-color 0.3s ease, color 0.3s ease;
             display: inline-flex;
-            align-items: center; /* จัดกึ่งกลางแนวตั้ง */
+            align-items: center; 
         }
         
         .button.delete-all i {
-            margin-right: 8px; /* ระยะห่างระหว่างไอคอนกับข้อความ */
+            margin-right: 8px; 
         }
         
         .button.delete-all:hover {
@@ -108,8 +108,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            width: 15%; /* ปรับขนาดตามความเหมาะสม */
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* เพิ่มเงา */
+            width: 15%; 
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); 
         }
 
         
@@ -122,25 +122,25 @@
         
         .pagination .icon-button {
             margin: 0 8px;
-            font-size: 20px; /* ขนาดไอคอน */
-            color: #999999; /* สีพื้นฐานของไอคอน */
+            font-size: 20px; 
+            color: #999999; 
             transition: color 0.3s ease, transform 0.2s ease;
             cursor: pointer;
-            transform: scale(1); /* ขนาดพื้นฐาน */
+            transform: scale(1); 
         }
         
         .pagination .icon-button:hover {
-            color: #007bff; /* เปลี่ยนสีเมื่อ hover */
-            transform: scale(1.2); /* ขยายเล็กน้อยเมื่อ hover */
+            color: #007bff; 
+            transform: scale(1.2); 
         }
         
         .pagination .icon-button:active {
-            color: #333333; /* เปลี่ยนสีเมื่อกด */
-            transform: scale(1); /* ขนาดกลับมาเหมือนเดิมเมื่อกด */
+            color: #333333; 
+            transform: scale(1); 
         }
         
         .pagination .icon-button.disabled {
-            color: #cccccc; /* สีเมื่อถูกปิดใช้งาน */
+            color: #cccccc; 
             cursor: not-allowed;
         }
         
@@ -156,7 +156,7 @@
             background-color: #e6edf4;
             margin: 0 0 2rem 0;
             padding: 1rem;
-            border-radius: 8px; /* Added for a smoother look */
+            border-radius: 8px; 
         }
         
         .navbar-brand {
@@ -298,7 +298,41 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+
+        /* สไตล์สำหรับกล่องที่แสดงสถิติการยืมอุปกรณ์ */
+        /* สไตล์สำหรับการจัดวางรายการสถิติอุปกรณ์ในแนวนอน */
+        #equipmentStatisticsContainer {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        /* สไตล์สำหรับข้อความแสดงจำนวนการยืมทั้งหมด */
+        #totalBorrowingsContainer p {
+            font-size: 18px;
+            font-weight: 600;
+            color: #343a40;
+            margin: 0 0 10px 0; 
+        }
         
+        /* ตรงกับ JavaScript ใน `displayEquipmentStatistics` function */
+        #equipmentStatistics {
+            display: flex;
+            gap: 20px; 
+        }
+        
+        /* สไตล์สำหรับข้อความแสดงจำนวนการยืมแยกตามประเภทอุปกรณ์ */
+        #equipmentStatistics p {  
+            font-size: 16px;
+            color: #495057;
+            margin: 0;
+            padding: 5px 10px;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            display: inline-block; 
+        }
         
         
     </style>
@@ -324,6 +358,14 @@
         <div class="back-link">
         </div>
         <h1>อนุมัติยืม-คืนอุปกรณ์</h1>
+
+        <div id="equipmentStatisticsContainer">
+            <div id="totalBorrowingsContainer">
+                <p><span id="totalBorrowings"></span></p>
+            </div>
+            <div id="equipmentStatistics"></div>
+        </div>
+
         <table id="requestsTable">
             <tr>
                 <th>วันที่ยืม</th>
@@ -348,6 +390,9 @@
             <i class="fas fa-trash-alt"></i> ลบทั้งหมด
         </button>
     </div>
+
+    
+    
     
     <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
         <div class="modal-dialog">
